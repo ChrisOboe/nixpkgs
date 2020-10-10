@@ -591,12 +591,13 @@ in {
              || cfg.password != null
              || cfg.passwordFile != null
              || cfg.openssh.authorizedKeys.keys != []
-             || cfg.openssh.authorizedKeys.keyFiles != [])
+             || cfg.openssh.authorizedKeys.keyFiles != []
+             || cfg.openssh.authorizedKeysCommand != null)
           ) cfg.users) ++ [
             config.security.googleOsLogin.enable
           ]);
         message = ''
-          Neither the root account nor any wheel user has a password or SSH authorized key.
+          Neither the root account nor any wheel user has a password, SSH authorized key or SSH autorized command.
           You must set one to prevent being locked out of your system.'';
       }
     ] ++ flip mapAttrsToList cfg.users (name: user:
