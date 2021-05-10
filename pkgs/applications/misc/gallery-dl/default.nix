@@ -1,21 +1,28 @@
-{ lib, python3Packages }:
+{ lib, buildPythonApplication, fetchPypi, requests, pytestCheckHook }:
 
-python3Packages.buildPythonApplication rec {
+buildPythonApplication rec {
   pname = "gallery_dl";
-  version = "1.15.0";
+  version = "1.17.3";
 
-  src = python3Packages.fetchPypi {
+  src = fetchPypi {
     inherit pname version;
-    sha256 = "1g9hmb5637x8bhm2wzarqnxzj0i93fcdm1myvld2d97a2d32hy6m";
+    sha256 = "5da10d931c371841575d988b4e91e9d4ce55c8c3c99aa6d4efa5abca34c75ec8";
   };
 
-  doCheck = false;
-  propagatedBuildInputs = with python3Packages; [ requests ];
+  propagatedBuildInputs = [ requests ];
 
-  meta = {
+  checkInputs = [ pytestCheckHook ];
+  pytestFlagsArray = [
+    # requires network access
+    "--ignore=test/test_results.py"
+    "--ignore=test/test_downloader.py"
+  ];
+
+  meta = with lib; {
     description = "Command-line program to download image-galleries and -collections from several image hosting sites";
     homepage = "https://github.com/mikf/gallery-dl";
-    license = lib.licenses.gpl2;
-    maintainers = with lib.maintainers; [ dawidsowa ];
+    license = licenses.gpl2;
+    maintainers = with maintainers; [ dawidsowa ];
+    platforms = platforms.unix;
   };
 }

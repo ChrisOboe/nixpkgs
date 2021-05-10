@@ -1,25 +1,25 @@
-{ stdenv, fetchFromGitHub, makeWrapper, python3Packages, perl, zip
-, gitMinimal }:
+{ lib, stdenv, fetchFromGitHub, makeWrapper, python3Packages, perl, zip
+, gitMinimal, ffmpeg }:
 
 let
 
   inherit (python3Packages)
-    python nose pycrypto pyyaml requests mock python-dateutil setuptools;
+    python nose cryptography pyyaml requests mock python-dateutil setuptools;
 
 in stdenv.mkDerivation rec {
   pname = "svtplay-dl";
-  version = "2.6";
+  version = "3.7";
 
   src = fetchFromGitHub {
     owner = "spaam";
     repo = "svtplay-dl";
     rev = version;
-    sha256 = "1d969ig4w6irx5822crhpab2f53svpiyf1vfx87irapy309dqy2y";
+    sha256 = "0krskxbmlglkipqzjwgm2nmq118m8l0djgh0f8l6n2w3bjblhyfx";
   };
 
-  pythonPaths = [ pycrypto pyyaml requests ];
-  buildInputs = [ python perl nose mock makeWrapper python-dateutil setuptools ] ++ pythonPaths;
-  nativeBuildInputs = [ gitMinimal zip ];
+  pythonPaths = [ cryptography pyyaml requests ];
+  buildInputs = [ python perl nose mock python-dateutil setuptools ] ++ pythonPaths;
+  nativeBuildInputs = [ gitMinimal zip makeWrapper ];
 
   postPatch = ''
     substituteInPlace scripts/run-tests.sh \
@@ -33,6 +33,7 @@ in stdenv.mkDerivation rec {
 
   postInstall = ''
     wrapProgram "$out/bin/svtplay-dl" \
+      --prefix PATH : "${ffmpeg}" \
       --prefix PYTHONPATH : "$PYTHONPATH"
   '';
 
@@ -41,11 +42,10 @@ in stdenv.mkDerivation rec {
     sh scripts/run-tests.sh -2
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://github.com/spaam/svtplay-dl";
     description = "Command-line tool to download videos from svtplay.se and other sites";
     license = licenses.mit;
-    platforms = stdenv.lib.platforms.linux;
-    maintainers = [ maintainers.rycee ];
+    platforms = lib.platforms.unix;
   };
 }

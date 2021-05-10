@@ -3,24 +3,26 @@
 , fetchPypi
 , uamqp
 , azure-common
+, azure-core
 , msrestazure
-, futures
+, futures ? null
 , isPy3k
 }:
 
 buildPythonPackage rec {
   pname = "azure-servicebus";
-  version = "0.50.3";
+  version = "7.1.1";
 
   src = fetchPypi {
     inherit pname version;
     extension = "zip";
-    sha256 = "2b1e60c81fcf5b6a5bb3ceddb27f24543f479912e39a4706a390a16d8c0a71f4";
+    sha256 = "58797defe666dd17ae11a8895395e7e844f11d2076ba4a9ce63682ac02f665d9";
   };
 
-  buildInputs = [
+  propagatedBuildInputs = [
     uamqp
     azure-common
+    azure-core
     msrestazure
   ] ++ lib.optionals (!isPy3k) [
     futures
@@ -36,6 +38,6 @@ buildPythonPackage rec {
     description = "This is the Microsoft Azure Service Bus Client Library";
     homepage = "https://github.com/Azure/azure-sdk-for-python";
     license = licenses.mit;
-    maintainers = with maintainers; [ mwilsoninsight ];
+    maintainers = with maintainers; [ maxwilson ];
   };
 }

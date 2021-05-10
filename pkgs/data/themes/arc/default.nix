@@ -1,10 +1,10 @@
-{ stdenv
+{ lib, stdenv
 , fetchFromGitHub
 , sassc
 , autoreconfHook
-, pkgconfig
+, pkg-config
 , gtk3
-, gnome3
+, gnome
 , gtk-engine-murrine
 , optipng
 , inkscape
@@ -13,18 +13,18 @@
 
 stdenv.mkDerivation rec {
   pname = "arc-theme";
-  version = "20200819";
+  version = "20210127";
 
   src = fetchFromGitHub {
     owner = "jnsh";
     repo = pname;
     rev = version;
-    sha256 = "1l5sc4r5jp3526r4p32fszny0cw6pkb45cp424hq0s0k344z9px6";
+    sha256 = "sha256-P7YZTD5bAWNWepL7qsZZAMf8ujzNbHOj/SLx8Fw3bi4=";
   };
 
   nativeBuildInputs = [
     autoreconfHook
-    pkgconfig
+    pkg-config
     sassc
     optipng
     inkscape
@@ -32,7 +32,7 @@ stdenv.mkDerivation rec {
   ];
 
   propagatedUserEnvPkgs = [
-    gnome3.gnome-themes-extra
+    gnome.gnome-themes-extra
     gtk-engine-murrine
   ];
 
@@ -45,7 +45,7 @@ stdenv.mkDerivation rec {
 
   configureFlags = [
     "--with-cinnamon=${cinnamon.cinnamon-common.version}"
-    "--with-gnome-shell=${gnome3.gnome-shell.version}"
+    "--with-gnome-shell=${gnome.gnome-shell.version}"
     "--disable-unity"
   ];
 
@@ -53,10 +53,10 @@ stdenv.mkDerivation rec {
     install -Dm644 -t $out/share/doc/${pname} AUTHORS *.md
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Flat theme with transparent elements for GTK 3, GTK 2 and Gnome Shell";
     homepage = "https://github.com/jnsh/arc-theme";
-    license = licenses.gpl3;
+    license = licenses.gpl3Only;
     platforms = platforms.linux;
     maintainers = with maintainers; [ simonvandel romildo ];
   };

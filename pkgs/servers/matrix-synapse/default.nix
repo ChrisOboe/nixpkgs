@@ -1,19 +1,22 @@
 { lib, stdenv, python3, openssl
 , enableSystemd ? stdenv.isLinux, nixosTests
+, enableRedis ? false
+, callPackage
 }:
 
 with python3.pkgs;
 
 let
   plugins = python3.pkgs.callPackage ./plugins { };
+  tools = callPackage ./tools { };
 in
 buildPythonApplication rec {
   pname = "matrix-synapse";
-  version = "1.20.1";
+  version = "1.33.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1sf36vwvy2f9jy6dldq6gqfmh60384i5j64s7yc131b4dp0n7lcw";
+    sha256 = "sha256-kH5HhkfUL+WzcX/0pK0dV1bI34TpmgRpx3m/UchdAEE=";
   };
 
   patches = [
@@ -35,13 +38,7 @@ buildPythonApplication rec {
     netaddr
     phonenumbers
     pillow
-    (prometheus_client.overrideAttrs (x: {
-      src = fetchPypi {
-        pname = "prometheus_client";
-        version = "0.3.1";
-        sha256 = "093yhvz7lxl7irnmsfdnf2030lkj4gsfkg6pcmy4yr1ijk029g0p";
-      };
-    }))
+    prometheus_client
     psutil
     psycopg2
     pyasn1
@@ -59,21 +56,24 @@ buildPythonApplication rec {
     typing-extensions
     authlib
     pyjwt
-  ] ++ lib.optional enableSystemd systemd;
+  ] ++ lib.optional enableSystemd systemd
+    ++ lib.optional enableRedis hiredis;
 
   checkInputs = [ mock parameterized openssl ];
 
   doCheck = !stdenv.isDarwin;
 
   checkPhase = ''
+    ${lib.optionalString (!enableRedis) "rm -r tests/replication # these tests need the optional dependency 'hiredis'"}
     PYTHONPATH=".:$PYTHONPATH" ${python3.interpreter} -m twisted.trial tests
   '';
 
   passthru.tests = { inherit (nixosTests) matrix-synapse; };
   passthru.plugins = plugins;
+  passthru.tools = tools;
   passthru.python = python3;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://matrix.org";
     description = "Matrix reference homeserver";
     license = licenses.asl20;

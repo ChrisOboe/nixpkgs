@@ -1,12 +1,12 @@
-{ stdenv, fetchurl, makeWrapper, jre }:
+{ lib, stdenv, fetchurl, makeWrapper, jre }:
 
 stdenv.mkDerivation rec {
   pname = "ergo";
-  version = "3.3.3";
+  version = "4.0.9";
 
   src = fetchurl {
     url = "https://github.com/ergoplatform/ergo/releases/download/v${version}/ergo-${version}.jar";
-    sha256 = "1lsqshpbc5p5qm8kic8a90xmvd2zx2s7jf613j9ng4h3hh75wbff";
+    sha256 = "sha256-FstAKUZVKW9U6QTqqCEDybvbBl+0H9qVHqFMPubdDpk=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -17,7 +17,7 @@ stdenv.mkDerivation rec {
     makeWrapper ${jre}/bin/java $out/bin/ergo --add-flags "-jar $src"
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Open protocol that implements modern scientific ideas in the blockchain area";
     homepage = "https://ergoplatform.org/en/";
     license = licenses.cc0;

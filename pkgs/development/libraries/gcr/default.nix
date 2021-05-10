@@ -1,6 +1,6 @@
-{ stdenv
+{ lib, stdenv
 , fetchurl
-, pkgconfig
+, pkg-config
 , meson
 , ninja
 , gettext
@@ -15,18 +15,18 @@
 , makeWrapper
 , libxslt
 , vala
-, gnome3
+, gnome
 , python3
 , shared-mime-info
 }:
 
 stdenv.mkDerivation rec {
   pname = "gcr";
-  version = "3.36.0";
+  version = "3.40.0";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "00b6bzpr8rj8mvj66r2273r417wg2y21m6n88mhkq9m22z8bxyda";
+    url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "udNkWl/ZU6VChcxk1PwEZzZGPb1NzCXK9ce1m+0wJ/U=";
   };
 
   postPatch = ''
@@ -39,7 +39,7 @@ stdenv.mkDerivation rec {
   outputs = [ "out" "dev" ];
 
   nativeBuildInputs = [
-    pkgconfig
+    pkg-config
     meson
     python3
     ninja
@@ -82,12 +82,13 @@ stdenv.mkDerivation rec {
   '';
 
   passthru = {
-    updateScript = gnome3.updateScript {
+    updateScript = gnome.updateScript {
       packageName = pname;
+      versionPolicy = "odd-unstable";
     };
   };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     platforms = platforms.linux;
     maintainers = teams.gnome.members;
     description = "GNOME crypto services (daemon and tools)";

@@ -1,21 +1,24 @@
 # This script was inspired by the ArchLinux User Repository package:
 #
 #   https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=oh-my-zsh-git
-{ stdenv, fetchFromGitHub }:
+{ lib, stdenv, fetchFromGitHub, nixosTests, writeScript, common-updater-scripts
+, git, nix, nixfmt, jq, coreutils, gnused, curl, cacert }:
 
 stdenv.mkDerivation rec {
-  version = "2020-10-09";
+  version = "2021-04-26";
   pname = "oh-my-zsh";
-  rev = "1bb402190d53c118f47a0851f5714dd4faa52809";
+  rev = "63a7422d8dd5eb93c849df0ab9e679e6f333818a";
 
   src = fetchFromGitHub {
     inherit rev;
     owner = "ohmyzsh";
     repo = "ohmyzsh";
-    sha256 = "0alm6253mz8yq5l17q7hj89aa0c0nfknds9vqx8pd619bsa6kf4g";
+    sha256 = "1spi6y5jmha0bf1s69mycpmksxjniqmcnvkvmza4rhji8v8b120w";
   };
 
   installPhase = ''
+    runHook preInstall
+
     outdir=$out/share/oh-my-zsh
     template=templates/zshrc.zsh-template
 
@@ -63,9 +66,47 @@ stdenv.mkDerivation rec {
         . ~/.zsh_aliases
     fi
     EOF
+
+    runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
+  passthru = {
+    tests = { inherit (nixosTests) oh-my-zsh; };
+
+    updateScript = writeScript "update.sh" ''
+      #!${stdenv.shell}
+      set -o errexit
+      PATH=${
+        lib.makeBinPath [
+          common-updater-scripts
+          curl
+          cacert
+          git
+          nixfmt
+          nix
+          jq
+          coreutils
+          gnused
+        ]
+      }
+
+      oldVersion="$(nix-instantiate --eval -E "with import ./. {}; lib.getVersion oh-my-zsh" | tr -d '"')"
+      latestSha="$(curl -L -s https://api.github.com/repos/ohmyzsh/ohmyzsh/commits\?sha\=master\&since\=$oldVersion | jq -r '.[0].sha')"
+
+      if [ ! "null" = "$latestSha" ]; then
+        nixpkgs="$(git rev-parse --show-toplevel)"
+        default_nix="$nixpkgs/pkgs/shells/zsh/oh-my-zsh/default.nix"
+        latestDate="$(curl -L -s https://api.github.com/repos/ohmyzsh/ohmyzsh/commits/$latestSha | jq '.commit.committer.date' | sed 's|"\(.*\)T.*|\1|g')"
+        update-source-version oh-my-zsh "$latestSha" --version-key=rev
+        update-source-version oh-my-zsh "$latestDate" --ignore-same-hash
+        nixfmt "$default_nix"
+      else
+        echo "${pname} is already up-to-date"
+      fi
+    '';
+  };
+
+  meta = with lib; {
     description = "A framework for managing your zsh configuration";
     longDescription = ''
       Oh My Zsh is a framework for managing your zsh configuration.
@@ -78,6 +119,6 @@ stdenv.mkDerivation rec {
     homepage = "https://ohmyz.sh/";
     license = licenses.mit;
     platforms = platforms.all;
-    maintainers = with maintainers; [ scolobb nequissimus ];
+    maintainers = with maintainers; [ nequissimus ];
   };
 }

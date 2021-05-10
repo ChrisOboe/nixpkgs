@@ -1,4 +1,4 @@
-{ stdenv
+{ lib, stdenv
 , fetchurl
 , perl
 , python3
@@ -7,7 +7,7 @@
 , gperf
 , cmake
 , ninja
-, pkgconfig
+, pkg-config
 , gettext
 , gobject-introspection
 , libnotify
@@ -36,42 +36,41 @@
 , readline
 , libGL
 , libGLU
+, mesa
 , libintl
+, libmanette
 , openjpeg
 , enableGeoLocation ? true
 , geoclue2
 , sqlite
-, enableGtk2Plugins ? false
-, gtk2 ? null
 , enableGLES ? true
 , gst-plugins-base
 , gst-plugins-bad
 , woff2
 , bubblewrap
 , libseccomp
+, systemd
 , xdg-dbus-proxy
 , substituteAll
 , glib
 }:
 
 assert enableGeoLocation -> geoclue2 != null;
-assert enableGtk2Plugins -> gtk2 != null;
-assert stdenv.isDarwin -> !enableGtk2Plugins;
-
-with stdenv.lib;
 
 stdenv.mkDerivation rec {
   pname = "webkitgtk";
-  version = "2.28.4";
+  version = "2.32.0";
 
   outputs = [ "out" "dev" ];
 
+  separateDebugInfo = stdenv.isLinux;
+
   src = fetchurl {
     url = "https://webkitgtk.org/releases/${pname}-${version}.tar.xz";
-    sha256 = "0r4lkk21pny2g4mmsw0ds14m5hhjys1l47gvy59dfgihr7l546c2";
+    sha256 = "1w3b0w8izp0i070grhv19j631sdcd0mcqnjnax13k8mdx7dg8zcx";
   };
 
-  patches = optionals stdenv.isLinux [
+  patches = lib.optionals stdenv.isLinux [
     (substituteAll {
       src = ./fix-bubblewrap-paths.patch;
       inherit (builtins) storeDir;
@@ -79,12 +78,12 @@ stdenv.mkDerivation rec {
     ./libglvnd-headers.patch
   ];
 
-  preConfigure = stdenv.lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
+  preConfigure = lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
     # Ignore gettext in cmake_prefix_path so that find_program doesn't
     # pick up the wrong gettext. TODO: Find a better solution for
     # this, maybe make cmake not look up executables in
     # CMAKE_PREFIX_PATH.
-    cmakeFlags+=" -DCMAKE_IGNORE_PATH=${getBin gettext}/bin"
+    cmakeFlags+=" -DCMAKE_IGNORE_PATH=${lib.getBin gettext}/bin"
   '';
 
   nativeBuildInputs = [
@@ -95,10 +94,11 @@ stdenv.mkDerivation rec {
     gperf
     ninja
     perl
-    pkgconfig
+    pkg-config
     python3
     ruby
     glib # for gdbus-codegen
+  ] ++ lib.optionals stdenv.isLinux [
     wayland # for wayland-scanner
   ];
 
@@ -112,9 +112,13 @@ stdenv.mkDerivation rec {
     harfbuzz
     libGL
     libGLU
+    mesa # for libEGL headers
     libgcrypt
     libidn
     libintl
+  ] ++ lib.optionals stdenv.isLinux [
+    libmanette
+  ] ++ [
     libnotify
     libpthreadstubs
     libsecret
@@ -134,16 +138,16 @@ stdenv.mkDerivation rec {
     libXdmcp
     libXt
     libXtst
-  ]) ++ optionals stdenv.isDarwin [
+  ]) ++ lib.optionals stdenv.isDarwin [
     libedit
     readline
-  ] ++ optionals stdenv.isLinux [
+  ] ++ lib.optionals stdenv.isLinux [
     bubblewrap
     libseccomp
+    systemd
     wayland
     xdg-dbus-proxy
-  ] ++ optional enableGeoLocation geoclue2
-    ++ optional enableGtk2Plugins gtk2;
+  ] ++ lib.optional enableGeoLocation geoclue2;
 
   propagatedBuildInputs = [
     gtk3
@@ -155,30 +159,38 @@ stdenv.mkDerivation rec {
     "-DPORT=GTK"
     "-DUSE_LIBHYPHEN=OFF"
     "-DUSE_WPE_RENDERER=OFF"
-  ] ++ optionals stdenv.isDarwin [
-    "-DENABLE_GRAPHICS_CONTEXT_3D=OFF"
+  ] ++ lib.optionals stdenv.isDarwin [
+    "-DENABLE_GAMEPAD=OFF"
     "-DENABLE_GTKDOC=OFF"
     "-DENABLE_MINIBROWSER=OFF"
-    "-DENABLE_OPENGL=OFF"
     "-DENABLE_QUARTZ_TARGET=ON"
     "-DENABLE_VIDEO=ON"
     "-DENABLE_WEBGL=OFF"
     "-DENABLE_WEB_AUDIO=OFF"
     "-DENABLE_X11_TARGET=OFF"
-    "-DUSE_ACCELERATE=0"
+    "-DUSE_APPLE_ICU=OFF"
+    "-DUSE_OPENGL_OR_ES=OFF"
     "-DUSE_SYSTEM_MALLOC=ON"
-  ] ++ optional (!enableGtk2Plugins) "-DENABLE_PLUGIN_PROCESS_GTK2=OFF"
-    ++ optional (stdenv.isLinux && enableGLES) "-DENABLE_GLES2=ON";
+  ] ++ lib.optionals (!stdenv.isLinux) [
+    "-DUSE_SYSTEMD=OFF"
+  ] ++ lib.optional (stdenv.isLinux && enableGLES) "-DENABLE_GLES2=ON";
 
   postPatch = ''
     patchShebangs .
+  '' + lib.optionalString stdenv.isDarwin ''
+    # It needs malloc_good_size.
+    sed 22i'#include <malloc/malloc.h>' -i Source/WTF/wtf/FastMalloc.h
+    # <CommonCrypto/CommonRandom.h> needs CCCryptorStatus.
+    sed 43i'#include <CommonCrypto/CommonCryptor.h>' -i Source/WTF/wtf/RandomDevice.cpp
   '';
 
-  meta = {
+  requiredSystemFeatures = [ "big-parallel" ];
+
+  meta = with lib; {
     description = "Web content rendering engine, GTK port";
     homepage = "https://webkitgtk.org/";
     license = licenses.bsd2;
-    platforms = platforms.linux;
+    platforms = platforms.linux ++ platforms.darwin;
     maintainers = teams.gnome.members;
   };
 }

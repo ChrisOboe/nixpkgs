@@ -4,7 +4,6 @@
 , fetchFromGitHub
 , substituteAll
 , gdb
-, colorama
 , flask
 , psutil
 , pytest-timeout
@@ -18,13 +17,13 @@
 
 buildPythonPackage rec {
   pname = "debugpy";
-  version = "1.0.0";
+  version = "1.3.0";
 
   src = fetchFromGitHub {
     owner = "Microsoft";
     repo = pname;
     rev = "v${version}";
-    sha256 = "1cxwbq97n5pfmq0hji1ybbc6i1jg5bjy830dq23zqxbwxxwjx98m";
+    hash = "sha256-YGzc9mMIzPTmUgIXuZROLdYKjUm69x9SR+JtYRVpn24=";
   };
 
   patches = [
@@ -32,6 +31,12 @@ buildPythonPackage rec {
     (substituteAll {
       src = ./hardcode-gdb.patch;
       inherit gdb;
+    })
+
+    # Use nixpkgs version instead of versioneer
+    (substituteAll {
+      src = ./hardcode-version.patch;
+      inherit version;
     })
 
     # Fix importing debugpy in:
@@ -60,7 +65,6 @@ buildPythonPackage rec {
   )'';
 
   checkInputs = [
-    colorama
     flask
     psutil
     pytest-timeout
@@ -83,6 +87,8 @@ buildPythonPackage rec {
     # gevent fails to import zope.interface with Python 2.7
     "gevent"
   ];
+
+  pythonImportsCheck = [ "debugpy" ];
 
   meta = with lib; {
     description = "An implementation of the Debug Adapter Protocol for Python";

@@ -1,7 +1,7 @@
 { lib
 , buildPythonPackage
 , fetchFromGitHub
-, isPy27
+, pythonOlder
 , attrs
 , isodate
 , dateutil
@@ -14,14 +14,14 @@
 
 buildPythonPackage rec {
   pname = "csvw";
-  version = "1.8.0";
-  disabled = isPy27;
+  version = "1.11.0";
+  disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "cldf";
     repo = "csvw";
     rev = "v${version}";
-    sha256 = "0maxrsiv9i9hkg627hwqyq8g6jg3g8iv8gdqaxz4aysjd9xddydd";
+    sha256 = "1393xwqawaxsflbq62vks92vv4zch8p6dd1mdvdi7j4vvf0zljkg";
   };
 
   patchPhase = ''

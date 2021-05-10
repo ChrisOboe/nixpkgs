@@ -1,4 +1,4 @@
-{ stdenv
+{ lib, stdenv
 , buildGoModule
 , fetchFromGitHub
 , go-bindata
@@ -11,9 +11,9 @@
 
 buildGoModule rec {
   pname = "minikube";
-  version = "1.13.1";
+  version = "1.19.0";
 
-  vendorSha256 = "09bcp7pqbs9j06z1glpad70dqlsnrf69vn75l00bdjknbrvbzrb9";
+  vendorSha256 = "sha256-WGW2uz3YJIUjLsYQ6rXNvgJGLrZSIkEEk07llLzMVXA=";
 
   doCheck = false;
 
@@ -21,7 +21,7 @@ buildGoModule rec {
     owner = "kubernetes";
     repo = "minikube";
     rev = "v${version}";
-    sha256 = "1x4x40nwcdshxzpg22v8nlzaprz1c6sizam47mwvqmb53p9qv90q";
+    sha256 = "sha256-F+nPSWX9gs/hvOR6g8MW4b+JW+w3ScDaaF/FLHbLspY=";
   };
 
   nativeBuildInputs = [ go-bindata installShellFiles pkg-config which ];
@@ -45,7 +45,7 @@ buildGoModule rec {
     done
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://minikube.sigs.k8s.io";
     description = "A tool that makes it easy to run Kubernetes locally";
     license = licenses.asl20;

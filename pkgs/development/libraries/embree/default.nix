@@ -1,15 +1,15 @@
-{ stdenv, lib, fetchFromGitHub, cmake, pkgconfig, ispc, tbb, glfw,
+{ stdenv, lib, fetchFromGitHub, cmake, pkg-config, ispc, tbb, glfw,
   openimageio, libjpeg, libpng, libpthreadstubs, libX11, glib }:
 
 stdenv.mkDerivation rec {
   pname = "embree";
-  version = "3.12.0";
+  version = "3.12.2";
 
   src = fetchFromGitHub {
     owner = "embree";
     repo = "embree";
     rev = "v${version}";
-    sha256 = "1q06fkfww8z8pcnhaqc4d2zi8hn620i9h9dmpnrfy3azalvizhkq";
+    sha256 = "sha256-aIZAkpAGvE332HxT4rR+rykww/ZLq2qKGLKiZTWyHCk=";
   };
 
   postPatch = ''
@@ -27,11 +27,11 @@ stdenv.mkDerivation rec {
   ];
 
 
-  nativeBuildInputs = [ ispc pkgconfig cmake ];
+  nativeBuildInputs = [ ispc pkg-config cmake ];
   buildInputs = [ tbb glfw openimageio libjpeg libpng libX11 libpthreadstubs ]
                 ++ lib.optionals stdenv.isDarwin [ glib ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "High performance ray tracing kernels from Intel";
     homepage = "https://embree.github.io/";
     maintainers = with maintainers; [ hodapp gebner ];
