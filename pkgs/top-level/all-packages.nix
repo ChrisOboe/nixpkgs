@@ -31348,4 +31348,6 @@ in
   xcolor = callPackage ../tools/graphics/xcolor { };
 
   zktree = callPackage ../applications/misc/zktree {};
+
+  hyperion-ng = callPackage ../applications/misc/hyperion-ng {};
 }
