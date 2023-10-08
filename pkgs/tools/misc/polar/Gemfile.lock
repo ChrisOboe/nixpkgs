@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     ffi (1.15.0)
-    google-protobuf (3.15.6)
+    google-protobuf (3.19.6)
     libusb (0.6.4)
       ffi (~> 1.0)
       mini_portile2 (~> 2.1)
